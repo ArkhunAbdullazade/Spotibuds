@@ -60,27 +60,31 @@ jobs:
         push: true
         tags: ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}
 
-    # Optionally, deploy to Azure Web App for Containers
+    # Deploy to Azure Web App for Containers using publish profiles
     - name: Deploy Identity API to Azure Web App
       uses: azure/webapps-deploy@v3
       with:
         app-name: identity-spotibuds
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_IDENTITY }}
         images: ${{ env.REGISTRY }}/identity-api:${{ env.IMAGE_TAG }}
 
     - name: Deploy Music API to Azure Web App
       uses: azure/webapps-deploy@v3
       with:
         app-name: music-spotibuds
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_MUSIC }}
         images: ${{ env.REGISTRY }}/music-api:${{ env.IMAGE_TAG }}
 
     - name: Deploy User API to Azure Web App
       uses: azure/webapps-deploy@v3
       with:
         app-name: user-spotibuds
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_USER }}
         images: ${{ env.REGISTRY }}/user-api:${{ env.IMAGE_TAG }}
 
     - name: Deploy Frontend to Azure Web App
       uses: azure/webapps-deploy@v3
       with:
         app-name: frontend-spotibuds
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_FRONTEND }}
         images: ${{ env.REGISTRY }}/frontend:${{ env.IMAGE_TAG }}

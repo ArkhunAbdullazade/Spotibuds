@@ -16,6 +16,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Add health check endpoint for Azure
+app.MapGet("/", () => "Identity API is running!");
+
+app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNow });
+
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

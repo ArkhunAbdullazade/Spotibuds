@@ -62,4 +62,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+// Health check endpoints
+app.MapGet("/", () => "Identity API is running!");
+app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNow });
+
 app.Run();

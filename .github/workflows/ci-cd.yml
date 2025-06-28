@@ -35,21 +35,24 @@ jobs:
     - name: Build and push Identity API
       uses: docker/build-push-action@v5
       with:
-        context: ./services/identity/Identity.API
+        context: ./
+        file: ./services/identity/Identity.API/Dockerfile
         push: true
         tags: ${{ env.REGISTRY }}/identity-api:${{ env.IMAGE_TAG }}
 
     - name: Build and push Music API
       uses: docker/build-push-action@v5
       with:
-        context: ./services/music/Music.API
+        context: ./
+        file: ./services/music/Music.API/Dockerfile
         push: true
         tags: ${{ env.REGISTRY }}/music-api:${{ env.IMAGE_TAG }}
 
     - name: Build and push User API
       uses: docker/build-push-action@v5
       with:
-        context: ./services/user/User.API
+        context: ./
+        file: ./services/user/User.API/Dockerfile
         push: true
         tags: ${{ env.REGISTRY }}/user-api:${{ env.IMAGE_TAG }}
 

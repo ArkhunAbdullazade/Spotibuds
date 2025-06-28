@@ -482,3 +482,26 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Spotibuds specific exclusions
+# Identity service
+services/identity/Identity.API/bin/
+services/identity/Identity.API/obj/
+services/identity/Identity.Domain/bin/
+services/identity/Identity.Domain/obj/
+
+# Music service
+services/music/Music.API/bin/
+services/music/Music.API/obj/
+services/music/Music.Domain/bin/
+services/music/Music.Domain/obj/
+
+# User service
+services/user/User.API/bin/
+services/user/User.API/obj/
+services/user/User.Domain/bin/
+services/user/User.Domain/obj/
+
+# Shared project
+shared/Shared/bin/
+shared/Shared/obj/

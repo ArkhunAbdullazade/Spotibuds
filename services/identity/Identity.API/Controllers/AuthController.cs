@@ -1,6 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Shared.Entities;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Identity.API.Controllers;
 
@@ -11,20 +16,48 @@ public class AuthController : ControllerBase
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+    private readonly IConfiguration _configuration;
 
     public AuthController(
-        UserManager<User> userManager, 
+        UserManager<User> userManager,
         SignInManager<User> signInManager,
-        RoleManager<IdentityRole<Guid>> roleManager)
+        RoleManager<IdentityRole<Guid>> roleManager,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
+        _configuration = configuration;
     }
 
-    /// <summary>
-    /// Register a new user
-    /// </summary>
+    private string GenerateJwtToken(User user, IList<string> roles)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
@@ -48,9 +81,6 @@ public class AuthController : ControllerBase
         return BadRequest(result.Errors);
     }
 
-    /// <summary>
-    /// Login user
-    /// </summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
@@ -62,9 +92,12 @@ public class AuthController : ControllerBase
             var user = await _userManager.FindByNameAsync(dto.Username);
             var roles = await _userManager.GetRolesAsync(user!);
 
-            return Ok(new 
-            { 
+            var jwtToken = GenerateJwtToken(user!, roles);
+
+            return Ok(new
+            {
                 message = "Login successful",
+                token = jwtToken,
                 userId = user!.Id,
                 username = user.UserName,
                 email = user.Email,
@@ -75,9 +108,7 @@ public class AuthController : ControllerBase
         return BadRequest("Invalid username or password");
     }
 
-    /// <summary>
-    /// Logout user
-    /// </summary>
+    [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -85,9 +116,7 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Logged out successfully" });
     }
 
-    /// <summary>
-    /// Get user profile
-    /// </summary>
+    [Authorize]
     [HttpGet("users/{id}")]
     public async Task<IActionResult> GetUser(Guid id)
     {
@@ -110,9 +139,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Update user profile
-    /// </summary>
+    [Authorize]
     [HttpPut("users/{id}")]
     public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserDto dto)
     {
@@ -123,7 +150,7 @@ public class AuthController : ControllerBase
         }
 
         user.IsPrivate = dto.IsPrivate ?? user.IsPrivate;
-        
+
         if (!string.IsNullOrEmpty(dto.Email))
         {
             user.Email = dto.Email;
@@ -138,9 +165,7 @@ public class AuthController : ControllerBase
         return BadRequest(result.Errors);
     }
 
-    /// <summary>
-    /// Assign role to user (Admin only)
-    /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpPost("users/{id}/roles/{role}")]
     public async Task<IActionResult> AssignRole(Guid id, string role)
     {
@@ -169,9 +194,7 @@ public class AuthController : ControllerBase
         return BadRequest(result.Errors);
     }
 
-    /// <summary>
-    /// Search users by username
-    /// </summary>
+    [Authorize]
     [HttpGet("users/search")]
     public IActionResult SearchUsers([FromQuery] string username)
     {
@@ -214,4 +237,4 @@ public class UpdateUserDto
 {
     public string? Email { get; set; }
     public bool? IsPrivate { get; set; }
-} 
+}

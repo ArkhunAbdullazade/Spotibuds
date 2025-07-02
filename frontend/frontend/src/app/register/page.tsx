@@ -3,32 +3,89 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ReCAPTCHA from "react-google-recaptcha";
 
-export default function Login() {
+export default function Register() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const router = useRouter();
+
+  async function checkEmailExists(email: string) {
+    return email.endsWith("@gmail.com");
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    if (!username.trim()) {
+      setError("Username is required.");
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setError("Password must have at least one digit (0-9).");
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      setError("Password must have at least one uppercase letter (A-Z).");
+      return;
+    }
+    if (!recaptchaToken) {
+      setError("Please complete the CAPTCHA.");
+      return;
+    }
+    setLoading(true);
     try {
-      const res = await fetch("http://localhost:5086/api/auth/login", {
+      const emailValid = await checkEmailExists(email);
+      if (!emailValid) {
+        throw new Error("Email does not exist or is not a valid Google account.");
+      }
+      const res = await fetch("http://localhost:5086/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, rememberMe: false }),
+        body: JSON.stringify({ username, email, password, recaptchaToken }),
       });
       if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || "Login failed");
+        let msg = await res.text();
+        try {
+          const json = JSON.parse(msg);
+          if (Array.isArray(json)) {
+            const duplicate = json.find((e: any) => e.code === "DuplicateUserName");
+            if (duplicate) {
+              setError("This username is already taken.");
+              setLoading(false);
+              return;
+            }
+            if (json[0]?.description) {
+              setError(json[0].description);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {
+          setError(msg || "Registration failed");
+          setLoading(false);
+          return;
+        }
+        setError("Registration failed");
+        setLoading(false);
+        return;
       }
-      //router.push("/register");
+      router.push("/"); 
     } catch (err: any) {
-      setError(err.message || "Login failed");
+      setError(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -43,12 +100,20 @@ export default function Login() {
         onSubmit={handleSubmit}
         className="flex flex-col gap-4 w-full max-w-xs sm:max-w-sm bg-black/60 p-6 sm:p-8 rounded-xl shadow-lg border border-purple-800"
       >
-        <h1 className="text-2xl font-bold mb-4 text-center text-purple-200">Login</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center text-purple-200">Register</h1>
         <input
           type="text"
           placeholder="Username"
           value={username}
           onChange={e => setUsername(e.target.value)}
+          className="border border-purple-700 bg-black/40 text-purple-100 placeholder:text-purple-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
+          required
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
           className="border border-purple-700 bg-black/40 text-purple-100 placeholder:text-purple-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
           required
         />
@@ -80,21 +145,28 @@ export default function Login() {
             )}
           </button>
         </div>
+        <div className="flex justify-center my-2">
+          <ReCAPTCHA
+            sitekey="6Lc_XnUrAAAAAJifrj3oH0a2EGx6ml4pWIrlYKus"
+            theme="dark"
+            onChange={(token: string | null) => setRecaptchaToken(token)}
+          />
+        </div>
         <button
           type="submit"
           className="bg-gradient-to-r from-purple-700 to-purple-500 text-white py-2 rounded font-semibold hover:from-purple-800 hover:to-purple-600 transition border border-purple-900 shadow"
           disabled={loading}
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? "Registering..." : "Register"}
         </button>
         {error && <div className="text-red-400 text-sm text-center">{error}</div>}
         <div className="flex items-center justify-center mt-4 gap-2">
-          <span className="text-purple-200">Don't you have an account?</span>
+          <span className="text-purple-200">Already have an account?</span>
           <Link
-            href="/register"
+            href="/"
             className="text-purple-300 font-semibold hover:underline hover:text-purple-100 transition"
           >
-            Sign up
+            Login
           </Link>
         </div>
       </form>

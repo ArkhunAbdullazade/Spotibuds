@@ -58,11 +58,11 @@ export default function Register() {
         body: JSON.stringify({ username, email, password, recaptchaToken }),
       });
       if (!res.ok) {
-        let msg = await res.text();
+        const msg = await res.text();
         try {
           const json = JSON.parse(msg);
           if (Array.isArray(json)) {
-            const duplicate = json.find((e: any) => e.code === "DuplicateUserName");
+            const duplicate = json.find((e: { code?: string }) => e.code === "DuplicateUserName");
             if (duplicate) {
               setError("This username is already taken.");
               setLoading(false);
@@ -84,8 +84,12 @@ export default function Register() {
         return;
       }
       router.push("/"); 
-    } catch (err: any) {
-      setError(err.message || "Registration failed");
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "message" in err && typeof (err as any).message === "string") {
+        setError((err as { message: string }).message || "Registration failed");
+      } else {
+        setError("Registration failed");
+      }
     } finally {
       setLoading(false);
     }

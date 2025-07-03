@@ -28,6 +28,9 @@ public class Song : BaseEntity
     [MaxLength(500)]
     public string? CoverUrl { get; set; }
 
+    public Guid ArtistId { get; set; }
+    public virtual Artist Artist { get; set; } = null!;
+
     // Navigation properties - only within Music service
     public virtual Album? Album { get; set; }
     public virtual ICollection<PlaylistSong> PlaylistSongs { get; set; } = new List<PlaylistSong>();

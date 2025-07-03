@@ -9,23 +9,23 @@ namespace Music.API.Controllers;
 [Route("api/[controller]")]
 public class SongsController : ControllerBase
 {
-    private readonly MusicDbContext _context;
+    private readonly MusicDbContext context;
 
     public SongsController(MusicDbContext context)
     {
-        _context = context;
+        this.context = context;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Song>>> GetSongs()
     {
-        return await _context.Songs.Include(s => s.Album).ToListAsync();
+        return await this.context.Songs.Include(s => s.Album).ToListAsync();
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Song>> GetSong(Guid id)
     {
-        var song = await _context.Songs.Include(s => s.Album).FirstOrDefaultAsync(s => s.Id == id);
+        var song = await this.context.Songs.Include(s => s.Album).FirstOrDefaultAsync(s => s.Id == id);
         if (song == null)
         {
             return NotFound();
@@ -36,8 +36,8 @@ public class SongsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Song>> CreateSong(Song song)
     {
-        _context.Songs.Add(song);
-        await _context.SaveChangesAsync();
+        this.context.Songs.Add(song);
+        await this.context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetSong), new { id = song.Id }, song);
     }
 
@@ -49,22 +49,22 @@ public class SongsController : ControllerBase
             return BadRequest();
         }
 
-        _context.Entry(song).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
+        this.context.Entry(song).State = EntityState.Modified;
+        await this.context.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteSong(Guid id)
     {
-        var song = await _context.Songs.FindAsync(id);
+        var song = await this.context.Songs.FindAsync(id);
         if (song == null)
         {
             return NotFound();
         }
 
-        _context.Songs.Remove(song);
-        await _context.SaveChangesAsync();
+        this.context.Songs.Remove(song);
+        await this.context.SaveChangesAsync();
         return NoContent();
     }
 }

@@ -7,7 +7,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 
 export default function Register() {
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -15,19 +14,11 @@ export default function Register() {
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const router = useRouter();
 
-  async function checkEmailExists(email: string) {
-    return true;
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     if (!username.trim()) {
       setError("Username is required.");
-      return;
-    }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      setError("Please enter a valid email address.");
       return;
     }
     if (password.length < 6) {
@@ -48,14 +39,10 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const emailValid = await checkEmailExists(email);
-      if (!emailValid) {
-        throw new Error("Email does not exist or is not a valid Google account.");
-      }
       const res = await fetch("http://localhost:5086/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password, recaptchaToken }),
+        body: JSON.stringify({ username, password, recaptchaToken }),
       });
       if (!res.ok) {
         const msg = await res.text();
@@ -85,8 +72,8 @@ export default function Register() {
       }
       router.push("/"); 
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "message" in err && typeof (err as any).message === "string") {
-        setError((err as { message: string }).message || "Registration failed");
+      if (err instanceof Error) {
+        setError(err.message || "Registration failed");
       } else {
         setError("Registration failed");
       }
@@ -109,15 +96,13 @@ export default function Register() {
           type="text"
           placeholder="Username"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
           className="border border-purple-700 bg-black/40 text-purple-100 placeholder:text-purple-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
           required
         />
         <input
           type="email"
           placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
           className="border border-purple-700 bg-black/40 text-purple-100 placeholder:text-purple-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
           required
         />
@@ -126,14 +111,14 @@ export default function Register() {
             type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             className="border border-purple-700 bg-black/40 text-purple-100 placeholder:text-purple-400 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-purple-600 pr-10"
             required
           />
           <button
             type="button"
             aria-label={showPassword ? "Hide password" : "Show password"}
-            onClick={() => setShowPassword((v) => !v)}
+            onClick={() => setShowPassword((v: boolean) => !v)}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-purple-400 hover:text-purple-200 focus:outline-none"
             tabIndex={0}
           >

@@ -12,7 +12,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -27,8 +27,12 @@ export default function Login() {
         throw new Error(msg || "Login failed");
       }
       router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Login failed");
+      } else {
+        setError("Login failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -48,7 +52,7 @@ export default function Login() {
           type="text"
           placeholder="Username"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
           className="border border-purple-700 bg-black/40 text-purple-100 placeholder:text-purple-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
           required
         />
@@ -57,14 +61,14 @@ export default function Login() {
             type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             className="border border-purple-700 bg-black/40 text-purple-100 placeholder:text-purple-400 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-purple-600 pr-10"
             required
           />
           <button
             type="button"
             aria-label={showPassword ? "Hide password" : "Show password"}
-            onClick={() => setShowPassword((v) => !v)}
+            onClick={() => setShowPassword((v: boolean) => !v)}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-purple-400 hover:text-purple-200 focus:outline-none"
             tabIndex={0}
           >
@@ -89,7 +93,7 @@ export default function Login() {
         </button>
         {error && <div className="text-red-400 text-sm text-center">{error}</div>}
         <div className="flex items-center justify-center mt-4 gap-2">
-          <span className="text-purple-200">Don't you have an account?</span>
+          <span className="text-purple-200">Don&apos;t you have an account?</span>
           <Link
             href="/register"
             className="text-purple-300 font-semibold hover:underline hover:text-purple-100 transition"

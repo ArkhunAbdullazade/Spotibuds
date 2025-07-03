@@ -26,7 +26,7 @@ export default function Login() {
         const msg = await res.text();
         throw new Error(msg || "Login failed");
       }
-      //router.push("/register");
+      router.push("/");
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {

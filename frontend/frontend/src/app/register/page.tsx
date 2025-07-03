@@ -16,7 +16,7 @@ export default function Register() {
   const router = useRouter();
 
   async function checkEmailExists(email: string) {
-    return email.endsWith("@gmail.com");
+    return true;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

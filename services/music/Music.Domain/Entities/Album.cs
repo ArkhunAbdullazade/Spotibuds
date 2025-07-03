@@ -19,6 +19,9 @@ public class Album : BaseEntity
 
     public DateTime? ReleaseDate { get; set; }
 
+    public Guid ArtistId { get; set; }
+    public virtual Artist Artist { get; set; } = null!;
+
     // Navigation properties - only within Music service
     public virtual ICollection<Song> Songs { get; set; } = new List<Song>();
 } 
